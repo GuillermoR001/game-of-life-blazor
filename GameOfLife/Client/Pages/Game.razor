@@ -1,0 +1,138 @@
+﻿@page "/game"
+
+<div class="d-flex justify-content-evenly mb-4">
+    <button class="btn btn-primary" onclick="@(() => Play())">Play</button>
+    <button class="btn btn-danger" onclick="@(() => Stop())">Stop</button>
+    <button class="btn btn-warning" onclick="@(() => Clear())">Clear</button>
+    <p>Generation: @generation</p>
+</div>
+<div class="table-responsive">
+    <table class="gof-table">
+        <tbody>
+            @for (int i = 0; i < grid.GetLength(0); i++)
+            {
+                <tr>
+                    @for (int j = 0; j < grid.GetLength(1); j++)
+                    {
+                        int row = i;
+                        int col = j;
+                        var cell = grid[row, col];
+                        <td class="cell @(cell == 1 ? " bg-primary" : null)" onclick="@(() => ActiveCell(row,col, cell))">&nbsp;</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<style>
+    table {
+        table-layout: fixed;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    td {
+        width: 15px !important;
+        text-align: center;
+        border: 1px solid black;
+        padding: 5px;
+    }
+</style>
+
+@code {
+    const int ROWS = 24;
+    const int COLS = 24;
+    public bool isRunning { get; set; } = false;
+    public int generation { get; set; } = 0;
+    private int[,] gridCopy = new int[ROWS, COLS];
+    private int[,] grid = new int[ROWS, COLS];
+
+    /// <summary>
+    /// Activer o deactive cell iside the board
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="col"></param>
+    /// <param name="currenState"></param>
+    private void ActiveCell(int row, int col, int currenState)
+    {
+        if ((row >= 0 && row <= ROWS) && (col >= 0 && col <= ROWS))
+        {
+            grid[row, col] = currenState == 1 ? 0 : 1;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Start the game :)
+    /// </summary>
+    /// <returns></returns>
+    private async Task Play()
+    {
+        isRunning = true;
+        gridCopy = (int[,])grid.Clone();
+        while (isRunning)
+        {
+            for (int row = 1; row < gridCopy.GetLength(0) - 1; row++)
+            {
+                for (int col = 1; col < gridCopy.GetLength(1) - 1; col++)
+                {
+                    int neighbors = CountNeighbors(row, col);
+                    if (gridCopy[row, col] == 0 && neighbors == 3)
+                    {
+                        gridCopy[row, col] = 1;
+                    }
+                    else if (gridCopy[row, col] == 1 && (neighbors == 2 || neighbors == 3))
+                    {
+                        gridCopy[row, col] = 1;
+                    }
+                    else if (gridCopy[row, col] == 1 && (neighbors < 2 || neighbors > 3))
+                    {
+                        gridCopy[row, col] = 0;
+                    }
+                }
+            }
+            generation += 1;
+            grid = (int[,])gridCopy.Clone();
+            await Task.Delay(200);
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Count all neighborad
+    /// </summary>
+    /// <param name="row"></param>
+    /// <param name="col"></param>
+    /// <returns></returns>
+    private int CountNeighbors(int row, int col)
+    {
+        return gridCopy[(row - 1) % ROWS, (col - 1) % COLS] +
+                gridCopy[(row) % ROWS, (col - 1) % COLS] +
+                gridCopy[(row + 1) % ROWS, (col - 1) % COLS] +
+                gridCopy[(row - 1) % ROWS, (col) % COLS] +
+                gridCopy[(row + 1) % ROWS, (col) % COLS] +
+                gridCopy[(row - 1) % ROWS, (col + 1) % COLS] +
+                gridCopy[(row) % ROWS, (col + 1) % COLS] +
+                gridCopy[(row + 1) % ROWS, (col + 1) % COLS];
+    }
+
+    /// <summary>
+    /// Clear board state
+    /// </summary>
+    private void Clear()
+    {
+        grid = new int[ROWS, COLS];
+        generation = 0;
+    }
+
+    /// <summary>
+    /// Stop game and rendering
+    /// </summary>
+    private void Stop()
+    {
+        isRunning = false;
+        StateHasChanged();
+    }
+}
