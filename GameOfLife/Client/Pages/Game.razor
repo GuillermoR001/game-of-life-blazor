@@ -38,6 +38,7 @@
         text-align: center;
         border: 1px solid black;
         padding: 5px;
+        cursor: pointer;
     }
 </style>
 
@@ -74,9 +75,9 @@
         gridCopy = (int[,])grid.Clone();
         while (isRunning)
         {
-            for (int row = 1; row < gridCopy.GetLength(0) - 1; row++)
+            for (int row = 0; row < ROWS; row++)
             {
-                for (int col = 1; col < gridCopy.GetLength(1) - 1; col++)
+                for (int col = 0; col < COLS; col++)
                 {
                     int neighbors = CountNeighbors(row, col);
                     if (gridCopy[row, col] == 0 && neighbors == 3)
@@ -95,7 +96,7 @@
             }
             generation += 1;
             grid = (int[,])gridCopy.Clone();
-            await Task.Delay(200);
+            await Task.Delay(600);
             StateHasChanged();
         }
     }
@@ -108,12 +109,14 @@
     /// <returns></returns>
     private int CountNeighbors(int row, int col)
     {
-        return gridCopy[(row - 1) % ROWS, (col - 1) % COLS] +
-                gridCopy[(row) % ROWS, (col - 1) % COLS] +
-                gridCopy[(row + 1) % ROWS, (col - 1) % COLS] +
-                gridCopy[(row - 1) % ROWS, (col) % COLS] +
+        int topRow = row == 0 ? (ROWS - 1) : (row - 1);
+        int topCol = col == 0 ? (COLS - 1) : (col - 1);
+        return gridCopy[topRow % ROWS, topCol % COLS] +
+                gridCopy[(row) % ROWS, topCol % COLS] +
+                gridCopy[(row + 1) % ROWS, topCol % COLS] +
+                gridCopy[topRow % ROWS, (col) % COLS] +
                 gridCopy[(row + 1) % ROWS, (col) % COLS] +
-                gridCopy[(row - 1) % ROWS, (col + 1) % COLS] +
+                gridCopy[topRow % ROWS, (col + 1) % COLS] +
                 gridCopy[(row) % ROWS, (col + 1) % COLS] +
                 gridCopy[(row + 1) % ROWS, (col + 1) % COLS];
     }
